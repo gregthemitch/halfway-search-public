@@ -20,29 +20,118 @@
         <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin=""/>
         <!-- Make sure you put this AFTER Leaflet's CSS -->
         <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+        <!-- Custom JS -->
+        <script src="js/index.js"></script>
     </head>
+
+    <style>
+        .new-address-btn {
+            background-color: grey;
+        }
+        .new-address-btn-hide {
+            display: none;
+        }
+    </style>
 
     <body>
         <div>
             <h2>Welcome!</h2>
         </div>
-        <div id="addresses">
-        </div>
+        <form id="address-input-form" style="padding-bottom: 15px;">
+            <row id="address-line-0">
+                <label for="address_input_0">Address</label>
+                <br>
+                <input id="address_input_0" name="address_0" type="text" placeholder="123, Main Street, Chicago, IL"><button class="new-address-btn" onclick="removeAddressInput(event)">-</button>
+                <br>
+            </row>
+            <row id="address-line-1">
+                <label for="address_input_1">Address</label>
+                <br>
+                <input id="address_input_1" name="address_1" type="text"><button class="new-address-btn" onclick="addAddressInput(event)">+</button>
+                <br>
+            </row>
+            <button id="submit-btn" type="submit">Submit</button>
+        </form>
         <div id="map" style="height: 40pc;" class="leaflet-container leaflet-touch leaflet-retina leaflet-fade-anim leaflet-grab leaflet-touch-drag leaflet-touch-zoom"></div>
     </body>
 </html>
 
 <script>
     var map = L.map('map').setView([41.795926566945624, -87.59523334916474], 13);
-    L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    let titleLayer = L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
     maxZoom: 19,
     attribution: '&copy; <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a>'
-}).addTo(map);
+    }).addTo(map);
 
-let addresses_elem = document.getElementById("addresses");
-let address_input_container = document.createElement("p")
-let address_input = document.createElement("form")
-let textarea = document.createElement("textarea");
-address_input.append(textarea)
-addresses_elem.append("hello",address_input)
+    let address_layer;
+    let qp_layer;
+
+    function submitAddresses(e) {
+        e.preventDefault();
+        var form = document.getElementById("address-input-form");
+        var formData = new FormData(form);
+
+        let object = {}
+        formData.forEach(function(value, key) {
+            object[key] = value
+        })
+
+        let jsonFormData = JSON.stringify(object)
+    
+        fetch("/submit", {
+            headers: {"Content-Type": "application/json"},
+            method: "POST",
+            body: jsonFormData,
+        })
+        .then(response => {
+            if (!response.ok) {
+                throw new Error('network returns error');
+            }
+        return response.json();
+        })
+        .then((resp) => {
+            // let respdiv = document.createElement("pre");
+            // respdiv.innerHTML = JSON.stringify(resp, null, 2);
+            // form.append(respdiv);
+            // console.log("resp from server ", resp);
+            try {
+                map.eachLayer(function (layer) {
+                    if (layer != titleLayer) {
+                        map.removeLayer(layer);
+                    }
+                });
+            }
+            catch(err) {
+                console.log("No layers exist")
+            }
+            
+
+            let addressArray = resp["addresses"] 
+            
+            let addressDict = {} 
+
+            for (let i = 0; i < addressArray.length; i++) {
+                addressDict["address_" + i] = L.marker([addressArray[i][0], addressArray[i][1]])
+            }
+            let addressfeatureGroup = Object.values(addressDict)
+            let address_layer = new L.featureGroup(addressfeatureGroup).addTo(map)
+            map.fitBounds(address_layer.getBounds())
+
+            let qpArray = resp["query_points"] 
+            let qpDict = {} 
+
+            for (let i = 0; i < qpArray.length; i++) {
+                qpDict["address_" + i] = L.circleMarker([qpArray[i][0], qpArray[i][1]])
+            }
+            let qpfeatureGroup = Object.values(qpDict)
+            let qp_layer = new L.featureGroup(qpfeatureGroup).addTo(map)
+        })
+        .catch((error) => {
+            // Handle error
+            console.log("error ", error);
+        });
+    }
+  
+  var addressForm = document.getElementById("address-input-form");
+  addressForm.addEventListener("submit", submitAddresses);
 </script>
