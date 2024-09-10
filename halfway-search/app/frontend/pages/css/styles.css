@@ -1,0 +1,12 @@
+.new-address-btn {
+    background-color: grey;
+}
+.new-address-btn-hide {
+    display: none;
+}
+.address-input {
+    width: 20pc;
+}
+.search-input {
+    width: 40pc;
+}

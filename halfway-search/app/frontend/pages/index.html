@@ -24,32 +24,30 @@
         <script src="js/index.js"></script>
     </head>
 
-    <style>
-        .new-address-btn {
-            background-color: grey;
-        }
-        .new-address-btn-hide {
-            display: none;
-        }
-    </style>
-
     <body>
         <div>
             <h2>Welcome!</h2>
         </div>
         <form id="address-input-form" style="padding-bottom: 15px;">
-            <row id="address-line-0">
+            <div>
+                <label for="yelp_search">Search</label>
+                <br>
+                <input id="yelp_search" type="text" name="yelp_search" value="What are you looking for?" class="search-input">
+                <br>
+                <br>
+            </div>
+            <div id="address-line-0">
                 <label for="address_input_0">Address</label>
                 <br>
-                <input id="address_input_0" name="address_0" type="text" placeholder="123, Main Street, Chicago, IL"><button class="new-address-btn" onclick="removeAddressInput(event)">-</button>
+                <input id="address_input_0" name="address_0" type="text" placeholder="123, Main Street, Chicago, IL" class="address-input"><button class="new-address-btn" onclick="removeAddressInput(event)">-</button>
                 <br>
-            </row>
-            <row id="address-line-1">
+            </div>
+            <div id="address-line-1">
                 <label for="address_input_1">Address</label>
                 <br>
-                <input id="address_input_1" name="address_1" type="text"><button class="new-address-btn" onclick="addAddressInput(event)">+</button>
+                <input id="address_input_1" name="address_1" type="text" class="address-input"><button class="new-address-btn" onclick="addAddressInput(event)">+</button>
                 <br>
-            </row>
+            </div>
             <button id="submit-btn" type="submit">Submit</button>
         </form>
         <div id="map" style="height: 40pc;" class="leaflet-container leaflet-touch leaflet-retina leaflet-fade-anim leaflet-grab leaflet-touch-drag leaflet-touch-zoom"></div>

@@ -1,5 +1,5 @@
 let address_counter = 1;
-
+console.log("HELLLO")
 function addAddressInput(event) {
     event.preventDefault();
 
@@ -10,7 +10,7 @@ function addAddressInput(event) {
     const form = document.getElementById("address-input-form");
 
     // Get row element with incrementing counter
-    const row = document.createElement("row");
+    const row = document.createElement("div");
     row.setAttribute("id", "address-line-" + new_id);
 
     const label = document.createElement("label")
@@ -23,6 +23,7 @@ function addAddressInput(event) {
     input.setAttribute("id", "address_input_" + new_id)
     input.setAttribute("type", "text")
     input.setAttribute("name", "address_" + new_id)
+    input.className = "address-input"
 
     const button = document.createElement("button")
     button.setAttribute("onClick", "addAddressInput(event)")
@@ -32,10 +33,10 @@ function addAddressInput(event) {
     // Insert row at end before submit button
     form.insertBefore(row, submit_btn)
     // Append everything to the row
-    row.appendChild(label, submit_btn)
-    row.appendChild(line_break, submit_btn)
-    row.appendChild(input, submit_btn)
-    row.appendChild(button, submit_btn)
+    row.appendChild(label)
+    row.appendChild(line_break)
+    row.appendChild(input)
+    row.appendChild(button)
     row.appendChild(document.createElement("br"))
 
     // Change previous button to be a "-" instead of a "+" to allow users to delete rows
@@ -52,7 +53,7 @@ function addAddressInput(event) {
 
 function removeAddressInput(event) {
     let button = (event.target) ? event.target: event.srcElement;
-    let addressInput = button.closest("row")
+    let addressInput = button.closest("div")
     
     button.remove()
     addressInput.remove()
