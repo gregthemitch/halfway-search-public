@@ -26,31 +26,34 @@
 
     <body>
         <div>
-            <h2>Welcome!</h2>
+            <div id="text-content">
+                <h2>Welcome!</h2>
+            </div>
+            <form id="address-input-form" style="padding-bottom: 15px;">
+                <div>
+                    <label for="yelp_search">Search</label>
+                    <br>
+                    <input id="yelp_search" type="text" name="yelp_search" placeholder="What are you looking for?" class="search-input">
+                    <br>
+                    <br>
+                </div>
+                <div id="address-line-0">
+                    <label for="address_input_0">Address</label>
+                    <br>
+                    <input id="address_input_0" name="address_0" type="text" placeholder="123, Main Street, Chicago, IL" class="address-input"><button class="new-address-btn" onclick="removeAddressInput(event)">-</button>
+                    <br>
+                </div>
+                <div id="address-line-1">
+                    <label for="address_input_1">Address</label>
+                    <br>
+                    <input id="address_input_1" name="address_1" type="text" class="address-input"><button class="new-address-btn" onclick="addAddressInput(event)">+</button>
+                    <br>
+                </div>
+                <button id="submit-btn" type="submit">Submit</button>
+            </form>
+            <div id="map" style="height: 40pc;" class="leaflet-container leaflet-touch leaflet-retina leaflet-fade-anim leaflet-grab leaflet-touch-drag leaflet-touch-zoom"></div>
+            <table id="results" class="results-table"></table>
         </div>
-        <form id="address-input-form" style="padding-bottom: 15px;">
-            <div>
-                <label for="yelp_search">Search</label>
-                <br>
-                <input id="yelp_search" type="text" name="yelp_search" value="What are you looking for?" class="search-input">
-                <br>
-                <br>
-            </div>
-            <div id="address-line-0">
-                <label for="address_input_0">Address</label>
-                <br>
-                <input id="address_input_0" name="address_0" type="text" placeholder="123, Main Street, Chicago, IL" class="address-input"><button class="new-address-btn" onclick="removeAddressInput(event)">-</button>
-                <br>
-            </div>
-            <div id="address-line-1">
-                <label for="address_input_1">Address</label>
-                <br>
-                <input id="address_input_1" name="address_1" type="text" class="address-input"><button class="new-address-btn" onclick="addAddressInput(event)">+</button>
-                <br>
-            </div>
-            <button id="submit-btn" type="submit">Submit</button>
-        </form>
-        <div id="map" style="height: 40pc;" class="leaflet-container leaflet-touch leaflet-retina leaflet-fade-anim leaflet-grab leaflet-touch-drag leaflet-touch-zoom"></div>
     </body>
 </html>
 
@@ -66,6 +69,7 @@
 
     function submitAddresses(e) {
         e.preventDefault();
+        let content = document.getElementById("text-content")
         var form = document.getElementById("address-input-form");
         var formData = new FormData(form);
 
@@ -88,10 +92,7 @@
         return response.json();
         })
         .then((resp) => {
-            // let respdiv = document.createElement("pre");
-            // respdiv.innerHTML = JSON.stringify(resp, null, 2);
-            // form.append(respdiv);
-            // console.log("resp from server ", resp);
+            // Remove all layers except the base
             try {
                 map.eachLayer(function (layer) {
                     if (layer != titleLayer) {
@@ -102,10 +103,8 @@
             catch(err) {
                 console.log("No layers exist")
             }
-            
-
+            // Map addresses
             let addressArray = resp["addresses"] 
-            
             let addressDict = {} 
 
             for (let i = 0; i < addressArray.length; i++) {
@@ -115,6 +114,7 @@
             let address_layer = new L.featureGroup(addressfeatureGroup).addTo(map)
             map.fitBounds(address_layer.getBounds())
 
+            // Map query points
             let qpArray = resp["query_points"] 
             let qpDict = {} 
 
@@ -123,6 +123,11 @@
             }
             let qpfeatureGroup = Object.values(qpDict)
             let qp_layer = new L.featureGroup(qpfeatureGroup).addTo(map)
+
+            // Process search results and put into table
+            let search_results = resp["results"]
+            constructTable(search_results)
+
         })
         .catch((error) => {
             // Handle error
@@ -132,4 +137,49 @@
   
   var addressForm = document.getElementById("address-input-form");
   addressForm.addEventListener("submit", submitAddresses);
+
+  function constructTable(json_data) {
+    let table = document.getElementById("results")
+    // Getting the all column names
+    let col_names = ["Name", "Address", "Price", "URL", "Distance"];
+
+    // Traversing the JSON data
+    for (let i = 0; i < json_data.length; i++) {
+        let row = document.createElement("tr");
+        for (let colIndex = 0; colIndex < col_names.length; colIndex++) {
+            let val = json_data[i][col_names[colIndex].toLowerCase()];
+
+            // If there is no key matching the column name
+            if (val == null) val = "";
+            let td = document.createElement("td")
+            td.innerHTML = val
+            row.append(td);
+        }
+
+        // Adding each row to the table
+        table.append(row);
+    }
+}
+
+    // function Headers(list, selector) {
+    //     let columns = [];
+    //     let header = $('<tr/>');
+
+    //     for (let i = 0; i < list.length; i++) {
+    //         let row = list[i];
+
+    //         for (let k in row) {
+    //             if ($.inArray(k, columns) == -1) {
+    //                 columns.push(k);
+
+    //                 // Creating the header
+    //                 header.append($('<th/>').html(k));
+    //             }
+    //         }
+    //     }
+
+    //     // Appending the header to the table
+    //     $(selector).append(header);
+    //     return columns;
+    // }       
 </script>

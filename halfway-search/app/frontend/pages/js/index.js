@@ -1,5 +1,5 @@
 let address_counter = 1;
-console.log("HELLLO")
+
 function addAddressInput(event) {
     event.preventDefault();
 
