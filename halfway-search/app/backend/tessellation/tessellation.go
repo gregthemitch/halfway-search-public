@@ -1,7 +1,6 @@
 package tessellation
 
 import (
-	"fmt"
 	"math"
 	"slices"
 	"strconv"
@@ -136,12 +135,12 @@ func dist2CoordOffsets(point orb.Point, dist float64, theta int) (float64, float
 	delta_longitude := dx / (111320 * math.Cos(point.X()))
 	delta_latitude := dy / 110540
 
-	return round(delta_longitude, 1e-7), round(delta_latitude, 1e-7)
+	return round(delta_longitude, 1e-5), round(delta_latitude, 1e-5)
 }
 
 func contains(running_list *orb.MultiPoint, point orb.Point) bool {
 	for _, p := range *running_list {
-		if x, y := math.Abs(p.X()-point.X()), math.Abs(p.Y()-point.Y()); x < 1e-5 && y < 1e-5 {
+		if x, y := math.Abs(p.X()-point.X()), math.Abs(p.Y()-point.Y()); x < 1e-2 && y < 1e-2 {
 			return true
 		}
 	}
@@ -185,19 +184,19 @@ func draw_points(centroid orb.Point, radius float64, apothem float64, offset flo
 			x_offset, y_offset = dist2CoordOffsets(centroid, apothem*2, 270)
 		}
 		if direction == "top-right" {
-			x_offset, y_offset = dist2CoordOffsets(centroid, apothem*2, 45)
+			x_offset, y_offset = dist2CoordOffsets(centroid, apothem*2, 30)
 		}
 		if direction == "top-left" {
-			x_offset, y_offset = dist2CoordOffsets(centroid, apothem*2, 135)
+			x_offset, y_offset = dist2CoordOffsets(centroid, apothem*2, 150)
 		}
 		if direction == "bottom-left" {
-			x_offset, y_offset = dist2CoordOffsets(centroid, apothem*2, 225)
+			x_offset, y_offset = dist2CoordOffsets(centroid, apothem*2, 210)
 		}
 		if direction == "bottom-right" {
-			x_offset, y_offset = dist2CoordOffsets(centroid, apothem*2, 315)
+			x_offset, y_offset = dist2CoordOffsets(centroid, apothem*2, 330)
 		}
 
-		new_centroid := orb.Point{round(centroid.X()+x_offset, 1e-3), round(centroid.Y()+y_offset, 1e-3)}
+		new_centroid := orb.Point{round(centroid.X()+x_offset, 1e-7), round(centroid.Y()+y_offset, 1e-7)}
 
 		// fmt.Println(new_centroid)
 		// fmt.Println(hex)
@@ -225,7 +224,7 @@ func draw_hex(centroid orb.Point, radius float64) orb.Polygon {
 
 	var points orb.Ring
 
-	degrees := 30
+	degrees := 0
 	for degrees <= 360 {
 		x_offset, y_offset := dist2CoordOffsets(centroid, radius, degrees)
 
@@ -248,7 +247,7 @@ func get_hexes(centroid orb.Point, radius float64, num_addresses int, address_po
 
 	draw_points(centroid, radius_meters, apothem, offset, &centroids, &hex_list, address_poly)
 
-	fmt.Println(hex_list)
+	// fmt.Println(hex_list)
 
 	return centroids
 	// 41.783578, -87.591028
