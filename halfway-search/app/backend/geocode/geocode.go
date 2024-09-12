@@ -3,25 +3,12 @@ package geocode
 import (
 	"encoding/json"
 	"io"
-	"log"
 	"net/url"
 	"os"
 
-	"github.com/joho/godotenv"
 	"github.com/paulmach/orb"
 	"github.com/useinsider/go-pkg/insrequester"
 )
-
-// Move to main.go file when ready
-func getEnvVars(key string) string {
-	err := godotenv.Load("../../../../.env.go")
-
-	if err != nil {
-		log.Fatalf("Error loading .env file")
-	}
-
-	return os.Getenv(key)
-}
 
 func Geocode(addresses *[]string) []orb.Point {
 	return postGoogle(addresses)
@@ -30,7 +17,7 @@ func Geocode(addresses *[]string) []orb.Point {
 func constructURLs(address string) url.Values {
 	params := url.Values{}
 	params.Add("address", address)
-	params.Add("key", getEnvVars("GOOGLE_API_KEY"))
+	params.Add("key", os.Getenv("GOOGLE_API_KEY"))
 
 	return params
 }
