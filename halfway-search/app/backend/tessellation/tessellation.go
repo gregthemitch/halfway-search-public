@@ -12,9 +12,9 @@ import (
 
 // [41.7841599 -87.5905214]
 
-func Tessellation(addresses []orb.Point) orb.MultiPoint {
+func Tessellation(addresses []orb.Point) (orb.MultiPoint, orb.Point) {
 	addressPolygon, centroid := giftWrap(addresses)
-	return get_hexes(centroid, 1, len(addresses), addressPolygon)
+	return get_hexes(centroid, 1, len(addresses), addressPolygon), centroid
 }
 
 // func main() {
@@ -125,6 +125,7 @@ func degree2rad(degree int) float64 {
 	return float64(degree) * math.Pi / 180
 }
 
+// Method for finding lat/long coordinates from distance and angle from a point
 // https://stackoverflow.com/questions/2187657/calculate-second-point-knowing-the-starting-point-and-distance
 func dist2CoordOffsets(point orb.Point, dist float64, theta int) (float64, float64) {
 	radians := degree2rad(theta)
@@ -135,12 +136,12 @@ func dist2CoordOffsets(point orb.Point, dist float64, theta int) (float64, float
 	delta_longitude := dx / (111320 * math.Cos(point.X()))
 	delta_latitude := dy / 110540
 
-	return round(delta_longitude, 1e-5), round(delta_latitude, 1e-5)
+	return round(delta_longitude, 1e-7), round(delta_latitude, 1e-7)
 }
 
 func contains(running_list *orb.MultiPoint, point orb.Point) bool {
 	for _, p := range *running_list {
-		if x, y := math.Abs(p.X()-point.X()), math.Abs(p.Y()-point.Y()); x < 1e-2 && y < 1e-2 {
+		if x, y := math.Abs(p.X()-point.X()), math.Abs(p.Y()-point.Y()); x < 1e-5 && y < 1e-5 {
 			return true
 		}
 	}
@@ -184,22 +185,22 @@ func draw_points(centroid orb.Point, radius float64, apothem float64, offset flo
 			x_offset, y_offset = dist2CoordOffsets(centroid, apothem*2, 270)
 		}
 		if direction == "top-right" {
-			x_offset, y_offset = dist2CoordOffsets(centroid, apothem*2, 30)
+			x_offset, y_offset = dist2CoordOffsets(centroid, apothem*2, 45)
 		}
 		if direction == "top-left" {
-			x_offset, y_offset = dist2CoordOffsets(centroid, apothem*2, 150)
+			x_offset, y_offset = dist2CoordOffsets(centroid, apothem*2, 135)
 		}
 		if direction == "bottom-left" {
-			x_offset, y_offset = dist2CoordOffsets(centroid, apothem*2, 210)
+			x_offset, y_offset = dist2CoordOffsets(centroid, apothem*2, 225)
 		}
 		if direction == "bottom-right" {
-			x_offset, y_offset = dist2CoordOffsets(centroid, apothem*2, 330)
+			x_offset, y_offset = dist2CoordOffsets(centroid, apothem*2, 315)
 		}
 
-		new_centroid := orb.Point{round(centroid.X()+x_offset, 1e-7), round(centroid.Y()+y_offset, 1e-7)}
+		new_centroid := orb.Point{round(centroid.X()+x_offset, 1e-3), round(centroid.Y()+y_offset, 1e-3)}
 
-		fmt.Println(new_centroid)
-		fmt.Println(hex)
+		// fmt.Println(new_centroid)
+		// fmt.Println(hex)
 		// if contains(points_list, new_centroid) {
 		// 	continue
 		// }
@@ -224,7 +225,7 @@ func draw_hex(centroid orb.Point, radius float64) orb.Polygon {
 
 	var points orb.Ring
 
-	degrees := 0
+	degrees := 30
 	for degrees <= 360 {
 		x_offset, y_offset := dist2CoordOffsets(centroid, radius, degrees)
 
@@ -247,7 +248,7 @@ func get_hexes(centroid orb.Point, radius float64, num_addresses int, address_po
 
 	draw_points(centroid, radius_meters, apothem, offset, &centroids, &hex_list, address_poly)
 
-	// fmt.Println(hex_list)
+	fmt.Println(hex_list)
 
 	return centroids
 	// 41.783578, -87.591028
@@ -304,19 +305,6 @@ func giftWrap(addresses []orb.Point) (orb.Polygon, orb.Point) {
 			right_side = append(right_side, a)
 		}
 	}
-
-	// Find smallest x value on right side
-	// This is a method to avoid crossing lines
-	// smallest_x := 0.0
-	// biggest_y := 0.0
-	// for i, a := range right_side {
-	// 	if i == 0 || a.X() < smallest_x {
-	// 		smallest_x = a.X()
-	// 	}
-	// 	if i == 0 || a.Y() > biggest_y {
-	// 		biggest_y = a.Y()
-	// 	}
-	// }
 
 	slices.Reverse(right_side)
 
