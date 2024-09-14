@@ -2,7 +2,6 @@ package search
 
 import (
 	"encoding/json"
-	"fmt"
 	"io"
 	"net/url"
 	"os"
@@ -69,10 +68,10 @@ func postYelp(points *orb.MultiPoint, query string, centroid orb.Point) []YelpRe
 	for _, p := range *points {
 		go func() {
 			headers := insrequester.Headers{{"Authorization": "Bearer " + os.Getenv("YELP_API_KEY")}, {"accept": "application/json"}, {"content-type": "application/json"}}
-			res, _ := requester.Get(insrequester.RequestEntity{Headers: headers, Endpoint: base_url + constructURLs(p, query).Encode()})
-			// if err == nil {
-			// 	return
-			// }
+			res, err := requester.Get(insrequester.RequestEntity{Headers: headers, Endpoint: base_url + constructURLs(p, query).Encode()})
+			if err != nil {
+				return
+			}
 			bytes, _ := io.ReadAll(res.Body)
 			// Closing response body to prevent memory leak
 			defer res.Body.Close()
@@ -129,9 +128,8 @@ func postYelp(points *orb.MultiPoint, query string, centroid orb.Point) []YelpRe
 			result.URL = r.(map[string]interface{})["url"].(string)
 
 			// Distance
-			result.Distance = geo.Distance(result.Coordinates, centroid)
-			fmt.Println(result)
-			// fmt.Println(centroid)
+			// Points are saved as lat/lng internally, so flipping to get accurate distance calculation
+			result.Distance = geo.Distance(orb.Point{result.Coordinates.Y(), result.Coordinates.X()}, orb.Point{centroid.Y(), centroid.X()})
 
 			responses = append(responses, result)
 		}

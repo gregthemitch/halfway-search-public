@@ -2,6 +2,7 @@ package geocode
 
 import (
 	"encoding/json"
+	"fmt"
 	"io"
 	"net/url"
 	"os"
@@ -30,14 +31,16 @@ func postGoogle(addresses *[]string) []orb.Point {
 
 	for _, a := range *addresses {
 		go func() {
-			res, _ := requester.Get(insrequester.RequestEntity{Endpoint: base_url + constructURLs(a).Encode()})
-			// if err == nil {
-			// 	return
-			// }
+			res, err := requester.Get(insrequester.RequestEntity{Endpoint: base_url + constructURLs(a).Encode()})
+			if err != nil {
+				fmt.Println(err)
+				return
+			}
 			bytes, _ := io.ReadAll(res.Body)
 			// Closing response body to prevent memory leak
 			defer res.Body.Close()
 			ch <- bytes
+
 		}()
 	}
 
