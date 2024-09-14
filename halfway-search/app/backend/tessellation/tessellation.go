@@ -37,9 +37,9 @@ import (
 
 // }
 
-func Tessellation(addresses []orb.Point) (orb.MultiPoint, orb.Point) {
+func Tessellation(addresses []orb.Point, radius_distance_miles float64) (orb.MultiPoint, orb.Point) {
 	addressPolygon, centroid := giftWrap(addresses)
-	return get_hexes(centroid, 1, len(addresses), addressPolygon), centroid
+	return get_hexes(centroid, radius_distance_miles, len(addresses), addressPolygon), centroid
 }
 
 // Convert from orb geometries to polygol geometries

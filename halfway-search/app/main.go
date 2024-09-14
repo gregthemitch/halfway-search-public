@@ -62,7 +62,8 @@ func readAddresses(w http.ResponseWriter, r *http.Request) {
 	}
 
 	coords := geocode.Geocode(&addresses)
-	query_points, centroid := tessellation.Tessellation(coords)
+	// Using 1 mile radius distance
+	query_points, centroid := tessellation.Tessellation(coords, 1)
 	// fmt.Println(len(query_points))
 	yelp_results := search.YelpSearch(query_points, yelp_search_query, centroid)
 
