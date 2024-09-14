@@ -9,6 +9,7 @@ import (
 	"io"
 	"log"
 	"net/http"
+	"time"
 
 	"github.com/joho/godotenv"
 )
@@ -37,6 +38,9 @@ func main() {
 // Process address and yelp query and return back query results
 func readAddresses(w http.ResponseWriter, r *http.Request) {
 
+	// Time server response
+	defer timer()()
+
 	bytes, _ := io.ReadAll(r.Body)
 	//Closing response body to prevent memory leak
 	defer r.Body.Close()
@@ -59,6 +63,7 @@ func readAddresses(w http.ResponseWriter, r *http.Request) {
 
 	coords := geocode.Geocode(&addresses)
 	query_points, centroid := tessellation.Tessellation(coords)
+	// fmt.Println(len(query_points))
 	yelp_results := search.YelpSearch(query_points, yelp_search_query, centroid)
 
 	// Set the Content-Type header to application/json
@@ -66,10 +71,17 @@ func readAddresses(w http.ResponseWriter, r *http.Request) {
 
 	// Create a simple JSON response
 	response := map[string]interface{}{"addresses": coords, "query_points": query_points, "results": yelp_results}
+	// response := map[string]interface{}{"addresses": coords, "query_points": query_points}
 	// fmt.Println(response)
+	fmt.Println("Request completed")
 
 	// Encode the response as JSON and send it
 	if err := json.NewEncoder(w).Encode(response); err != nil {
 		http.Error(w, "Failed to encode JSON", http.StatusInternalServerError)
 	}
+}
+
+func timer() func() {
+	start := time.Now()
+	return func() { fmt.Printf("Request took %v\n", time.Since(start)) }
 }

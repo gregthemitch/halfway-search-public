@@ -1,42 +1,46 @@
 package tessellation
 
 import (
+	dest "app/halfway-search/app/backend/tessellation/destination"
 	"math"
 	"slices"
 	"strconv"
 
 	"github.com/engelsjk/polygol"
 	"github.com/paulmach/orb"
+	"github.com/paulmach/orb/geo"
 )
 
-// [41.7841599 -87.5905214]
+// func main() {
+// 	fmt.Println(draw_hex(orb.Point{41.7841599, -87.5905214}, miles2meters(2), math.Pow(3, .5)*miles2meters(2)/2))
+// 	// fmt.Println(dest.FindDestination(orb.Point{41.7841599, -87.5905214}, 2*math.Pow(3, .5)*miles2meters(2)/2, 0))
+
+// 	// fmt.Println(dest.FindDestination(orb.Point{41.83429639109297, -87.59052139999999}, 2*math.Pow(3, .5)*miles2meters(2)/2, 180))
+// 	radius := miles2meters(2)
+// 	apothem := math.Pow(3, .5) * radius / 2
+
+// 	fmt.Println(dest.FindDestination(orb.Point{41.7841599, -87.5905214}, 2*apothem, 0))
+// 	fmt.Println(dest.FindDestination(orb.Point{41.7841599, -87.5905214}, 2*apothem, 60))
+// 	fmt.Println(dest.FindDestination(orb.Point{41.7841599, -87.5905214}, 2*apothem, 120))
+// 	fmt.Println(dest.FindDestination(orb.Point{41.7841599, -87.5905214}, 2*apothem, 180))
+// 	fmt.Println(dest.FindDestination(orb.Point{41.7841599, -87.5905214}, 2*apothem, -120))
+// 	fmt.Println(dest.FindDestination(orb.Point{41.7841599, -87.5905214}, 2*apothem, -60))
+
+// 	fmt.Println("")
+// 	newpt := dest.FindDestination(orb.Point{41.7841599, -87.5905214}, 2*apothem, 0)
+// 	fmt.Println(dest.FindDestination(newpt, 2*apothem, 0))
+// 	fmt.Println(dest.FindDestination(newpt, 2*apothem, 60))
+// 	fmt.Println(dest.FindDestination(newpt, 2*apothem, 120))
+// 	fmt.Println(dest.FindDestination(newpt, 2*apothem, 180))
+// 	fmt.Println(dest.FindDestination(newpt, 2*apothem, -120))
+// 	fmt.Println(dest.FindDestination(newpt, 2*apothem, -60))
+
+// }
 
 func Tessellation(addresses []orb.Point) (orb.MultiPoint, orb.Point) {
 	addressPolygon, centroid := giftWrap(addresses)
 	return get_hexes(centroid, 1, len(addresses), addressPolygon), centroid
 }
-
-// func main() {
-// 	// centroids, hexes := get_hexes(Point{0, 0}, 2, 0, 2)
-// 	// fmt.Println("Centroid list", centroids)
-// 	// fmt.Println("Hex polygon list", hexes)
-// 	// fmt.Println(giftWrap([]Point{{6, 8}, {0, 5}, {8, 6}, {1, 1}, {7, 7}, {-3, 2}, {-4, -4}, {13, -4}, {-10, 6}, {3, 0}, {2, 3}, {8, 9}, {6, -2}}))
-// 	// addresses := []orb.Point{{6, 8}, {0, 5}}
-// 	addresses := []orb.Point{{41.7841599, -87.5905214}, {41.7965962, -87.582055}, {41.800011, -87.595481}}
-// 	addressPolygon, centroid := giftWrap(addresses)
-// 	fmt.Println(get_hexes(centroid, 100, len(addresses), addressPolygon))
-
-// 	// fmt.Println(dist2CoordOffsets(orb.Point{-87.5905214, 41.7841599}, 2*miles2meters(1)*math.Cos(degree2rad(180/6)), 90))
-// 	// fmt.Println(draw_hex(orb.Point{-87.5905214, 41.7841599}, miles2meters(1)))
-// 	// A := [][][][]float64{{{{-4, -4}, {1, 1}, {-3, 2}, {2, 3}, {0, 5}, {-10, 6}, {3, 9}, {8, 9}, {6, 8}, {7, 7}, {8, 6}, {3, 0}, {6, -2}, {13, -4}, {-4, -4}}}}
-// 	// C := [][][][]float64{{{{2.838907469342252, 2.9504110531823837}, {2.8534002229654405, 2.9504110531823837}, {2.8606465997770347, 2.8461538461538463}, {2.8534002229654405, 2.741896639125309}, {2.838907469342252, 2.741896639125309}, {2.831661092530658, 2.8461538461538463}, {2.838907469342252, 2.9504110531823837}}}}
-
-// 	// union, _ := polygol.Union(A, C)
-// 	// intersection, _ := polygol.Intersection(A, C)
-
-// 	// fmt.Println("Union", union)
-// 	// fmt.Println("Intersection", intersection)
-// }
 
 // Convert from orb geometries to polygol geometries
 func g2p(g orb.Geometry) [][][][]float64 {
@@ -71,33 +75,26 @@ func g2p(g orb.Geometry) [][][][]float64 {
 	return p
 }
 
-// func p2g(p [][][][]float64) orb.Geometry {
+// Convert from polygol geometries to orb geometries
+func p2g(p [][][][]float64) orb.Geometry {
 
-// 	g := make(orb.MultiPolygon, len(p))
+	g := make(orb.MultiPolygon, len(p))
 
-// 	for i := range p {
-// 		g[i] = make([]orb.Ring, len(p[i]))
-// 		for j := range p[i] {
-// 			g[i][j] = make([]orb.Point, len(p[i][j]))
-// 			for k := range p[i][j] {
-// 				pt := p[i][j][k]
-// 				point := orb.Point{pt[0], pt[1]}
-// 				g[i][j][k] = point
-// 			}
-// 		}
-// 	}
-// 	return g
-// }
+	for i := range p {
+		g[i] = make([]orb.Ring, len(p[i]))
+		for j := range p[i] {
+			g[i][j] = make([]orb.Point, len(p[i][j]))
+			for k := range p[i][j] {
+				pt := p[i][j][k]
+				point := orb.Point{pt[0], pt[1]}
+				g[i][j][k] = point
+			}
+		}
+	}
+	return g
+}
 
-// Function to convert miles to degree changes
-// func miles2degrees(miles float64) float64 {
-
-// 	// One degree change is approximately 69 miles (on Earth)
-// 	// See reference https://calculator.academy/miles-to-degrees-calculator/
-// 	// lat_conversion_factor := 69
-// 	// return miles / float64(conversion_factor)
-// }
-
+// Convert miles to meters
 func miles2meters(miles float64) float64 {
 	return miles * 1609.344
 }
@@ -120,137 +117,114 @@ func round(num, unit float64) float64 {
 	return flt
 }
 
-func degree2rad(degree int) float64 {
-	return float64(degree) * math.Pi / 180
-}
+// Checks a single point against a slice of points to determine if it already exists in the slice
+// func contains(running_list *orb.MultiPoint, point orb.Point) bool {
+// 	for _, p := range *running_list {
+// 		if x, y := math.Abs(round(p.X(), 1e-4)-round(point.X(), 1e-4)), math.Abs(round(p.Y(), 1e-4)-round(point.Y(), 1e-4)); x < 1e-4 && y < 1e-4 {
+// 			return true
+// 		}
+// 	}
+// 	return false
+// }
 
-// Method for finding lat/long coordinates from distance and angle from a point
-// https://stackoverflow.com/questions/2187657/calculate-second-point-knowing-the-starting-point-and-distance
-func dist2CoordOffsets(point orb.Point, dist float64, theta int) (float64, float64) {
-	radians := degree2rad(theta)
-
-	dx := dist * math.Cos(radians) // theta measured clockwise from due east
-	dy := dist * math.Sin(radians)
-
-	delta_longitude := dx / (111320 * math.Cos(point.X()))
-	delta_latitude := dy / 110540
-
-	return round(delta_longitude, 1e-5), round(delta_latitude, 1e-5)
-}
-
-func contains(running_list *orb.MultiPoint, point orb.Point) bool {
+// Checks a single point against a slice of points to determine if it already exists in the slice.
+// Distance of the new point relative to all other points is calculated. Points shouldn't be at least the apothem's distance away.
+// With enough hexagons, the code runs into floating point issues where points should be the same, but end up slightly different. Checking distance is a way of handling that.
+func contains(running_list *orb.MultiPoint, point orb.Point, apothem float64) bool {
 	for _, p := range *running_list {
-		if x, y := math.Abs(p.X()-point.X()), math.Abs(p.Y()-point.Y()); x < 1e-2 && y < 1e-2 {
+		// Points are stored in the opposite order
+		pt1 := orb.Point{p.Y(), p.X()}
+		pt2 := orb.Point{point.Y(), point.X()}
+
+		if dist := geo.Distance(pt1, pt2); dist < apothem {
 			return true
 		}
 	}
 	return false
 }
 
-func draw_points(centroid orb.Point, radius float64, apothem float64, offset float64, points_list *orb.MultiPoint, hex_list *[]orb.Polygon, address_poly orb.Polygon) {
-
-	// Recursively draw centroids for hexagons stemming from an original point. The stopping condition is the number of hexagon "steps" away from the original point.
-	// Update to use spatial intersection
+// Recursively draw centroids for hexagons stemming from an original point
+func draw_points(centroid orb.Point, radius float64, apothem float64, points_list *orb.MultiPoint, hex_list *[]orb.Polygon, address_poly orb.Polygon) {
 
 	// STOP if centroid has already been checked
-	if contains(points_list, centroid) {
+	if contains(points_list, centroid, apothem) {
 		return
 	}
 
-	hex := draw_hex(centroid, radius)
+	hex := draw_hex(centroid, radius, apothem)
 
 	// STOP if new hexagon does not intersect the address polygon
 	intersection, _ := polygol.Intersection(g2p(address_poly), g2p(hex))
-	// fmt.Println("Address poly:", g2p(address_poly))
-	// fmt.Println("Intersection:", intersection)
+
+	// address_area := planar.Area(address_poly)
+	// intersection_area := planar.Area(p2g(intersection))
+
 	if len(intersection) == 0 {
 		return
 	}
+	// fmt.Println(intersection_area / address_area)
 
 	// Append point only if it doesn't exist in list and intersects address polygon
 	*points_list = append(*points_list, centroid)
 	// Add hexagon to list of hexagons
 	*hex_list = append(*hex_list, hex)
 
-	directions := []string{"top", "top-left", "top-right", "bottom", "bottom-left", "bottom-right"}
+	directions := map[string]float64{
+		"top":          0,
+		"top-right":    60,
+		"bottom-right": 120,
+		"bottom":       180,
+		"bottom-left":  -120,
+		"top-left":     -60}
 
-	for _, direction := range directions {
-		var x_offset, y_offset float64
-
-		if direction == "top" {
-			x_offset, y_offset = dist2CoordOffsets(centroid, apothem*2, 90)
-		}
-		if direction == "bottom" {
-			x_offset, y_offset = dist2CoordOffsets(centroid, apothem*2, 270)
-		}
-		if direction == "top-right" {
-			x_offset, y_offset = dist2CoordOffsets(centroid, apothem*2, 30)
-		}
-		if direction == "top-left" {
-			x_offset, y_offset = dist2CoordOffsets(centroid, apothem*2, 150)
-		}
-		if direction == "bottom-left" {
-			x_offset, y_offset = dist2CoordOffsets(centroid, apothem*2, 210)
-		}
-		if direction == "bottom-right" {
-			x_offset, y_offset = dist2CoordOffsets(centroid, apothem*2, 330)
-		}
-
-		new_centroid := orb.Point{round(centroid.X()+x_offset, 1e-7), round(centroid.Y()+y_offset, 1e-7)}
-
-		// fmt.Println(new_centroid)
-		// fmt.Println(hex)
-		// if contains(points_list, new_centroid) {
-		// 	continue
-		// }
-
-		// hex := draw_hex(new_centroid, radius)
-
-		// // STOP if new hexagon does not intersect the address polygon
-		// intersection, _ := polygol.Intersection(g2p(address_poly), g2p(hex))
-		// // fmt.Println("Address poly:", g2p(address_poly))
-		// // fmt.Println("Intersection:", intersection)
-		// if len(intersection) == 0 {
-		// 	continue
-		// }
-
-		draw_points(new_centroid, radius, apothem, offset, points_list, hex_list, address_poly)
+	for _, degree := range directions {
+		new_centroid := dest.FindDestination(centroid, 2*apothem, degree)
+		draw_points(new_centroid, radius, apothem, points_list, hex_list, address_poly)
 	}
 
 }
 
 // Draw hexagonal polygons around a given point
-func draw_hex(centroid orb.Point, radius float64) orb.Polygon {
+func draw_hex(centroid orb.Point, radius float64, apothem float64) orb.Polygon {
 
 	var points orb.Ring
 
-	degrees := 0
-	for degrees <= 360 {
-		x_offset, y_offset := dist2CoordOffsets(centroid, radius, degrees)
+	directions_keys := []string{"top", "top-right", "right", "bottom-right", "bottom", "bottom-left", "left", "top-left"}
+	directions := map[string]float64{
+		"top":          0,
+		"top-right":    30,
+		"right":        90,
+		"bottom-right": 150,
+		"bottom":       180,
+		"bottom-left":  -150,
+		"left":         -90,
+		"top-left":     -30}
 
-		points = append(points, orb.Point{round(centroid.X()+x_offset, 1e-7), round(centroid.Y()+y_offset, 1e-7)})
-		degrees += 60
+	for _, dir := range directions_keys {
+		if dir == "top" || dir == "bottom" {
+			points = append(points, dest.FindDestination(centroid, apothem, directions[dir]))
+		} else {
+			points = append(points, dest.FindDestination(centroid, radius, directions[dir]))
+		}
 	}
 
-	return orb.Polygon{points}
+	return orb.Polygon{append(points, dest.FindDestination(centroid, apothem, directions["top"]))}
 }
 
 func get_hexes(centroid orb.Point, radius float64, num_addresses int, address_poly orb.Polygon) orb.MultiPoint {
 	// Get centroids and hexagons originating from a point
 
 	radius_meters := miles2meters(radius)
-	apothem := radius_meters * math.Cos(degree2rad(180/6))
-	offset := radius_meters * 1.5
+	apothem := math.Pow(3, .5) * radius_meters / 2
 
 	centroids := make(orb.MultiPoint, 0, num_addresses)
 	hex_list := make([]orb.Polygon, 0, 20)
 
-	draw_points(centroid, radius_meters, apothem, offset, &centroids, &hex_list, address_poly)
+	draw_points(centroid, radius_meters, apothem, &centroids, &hex_list, address_poly)
 
 	// fmt.Println(hex_list)
 
 	return centroids
-	// 41.783578, -87.591028
 }
 
 // Find the average point across a series of points
@@ -273,18 +247,17 @@ func giftWrap(addresses []orb.Point) (orb.Polygon, orb.Point) {
 
 	// Turn lines (2 points) into polygons by giving them more points that are offset by a small modifier (250 meters)
 	if len(addresses) == 2 {
-		x_offset, y_offset := dist2CoordOffsets(findCentroid(addresses), 250, 180)
-		new_point1 := orb.Point{addresses[0].X() + x_offset, addresses[0].Y() + y_offset}
-		new_point2 := orb.Point{addresses[1].X() + x_offset, addresses[1].Y() + y_offset}
+		new_point1 := dest.FindDestination(addresses[0], 10, 90)
+		new_point2 := dest.FindDestination(addresses[1], 10, 90)
 
 		addresses = append(append(addresses, new_point1), new_point2)
 	}
 
 	// Sort addresses ascending on Y-coordinate
 	slices.SortFunc(addresses, func(a, b orb.Point) int {
-		if n := math.Abs(a.Y() - b.Y()); n > 1e-7 {
+		if n := a.Y() - b.Y(); n > 1e-7 {
 			return 1
-		} else if n < 0 {
+		} else if n < 1e-7 {
 			return -1
 		} else {
 			return 0
