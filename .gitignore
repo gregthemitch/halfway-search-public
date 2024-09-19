@@ -1,2 +1,5 @@
 .env.go
 python_testing_ground.ipynb
+.cert
+.ignore
+bin
