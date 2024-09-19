@@ -51,6 +51,21 @@
                 line-height: normal;
             text-indent: -2px;
         }
+
+        /* .inactive-map-results {
+            display: none;
+        }
+
+        .active-map-results {
+            display: inline;
+        } */
+
+        .map-container-full {
+            width: 100%;
+        }
+        .map-container-split {
+            width: 45%;
+        }
     </style>
 
     <main class="container">
@@ -64,6 +79,13 @@
                     <div>
                         <label for="yelp_search"><h3>Search</h3></label>
                         <input id="yelp_search" type="search" name="yelp_search" placeholder="What are you looking for? (e.g. Sushi, Arcades, Cafes, etc.)" class="search-input">
+                        <br>
+                    </div>
+                    <div>
+                        <label for="switch-1">
+                            <input type="checkbox" id="switch-1" name="do-yelp-search" role="switch" checked="">
+                            Yelp Search? <br> <div style="font-size: small;">(If off, the app will just return the centroid of the addresses)</div>
+                        </label>
                         <br>
                         <br>
                     </div>
@@ -80,8 +102,14 @@
                     <button id="submit-btn" type="submit" style="margin-top: 25px;">Submit</button>
                 </form>
             </section>
-            <div id="map" style="height: 40pc" class="leaflet-container leaflet-touch leaflet-retina leaflet-fade-anim leaflet-grab leaflet-touch-drag leaflet-touch-zoom"></div>
-            <div class="overflow-auto" style="height: 500px; margin-top: 20px;"><table id="results" class="striped" style="height: 100px; overflow: scroll;"></table></div>
+            <section id="map_and results">
+                <div id="map-container" style="float: left; margin-right: 2%;" class="map-container-full">
+                    <div id="map" style="height: 65pc" class="leaflet-container leaflet-touch leaflet-retina leaflet-fade-anim leaflet-grab leaflet-touch-drag leaflet-touch-zoom"></div>
+                </div>
+                <div style="float: right; margin-left: 2%; width: 50%;">
+                    <div class="overflow-auto" style="height: 65pc; margin-top: 20px;"><table id="results" class="striped" style="height: 100px; overflow: scroll;"></table></div>
+                </div>
+            </section>
         </div>
     </main>
 </html>

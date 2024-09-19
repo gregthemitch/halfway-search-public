@@ -12,6 +12,7 @@ import (
 	"time"
 
 	"github.com/joho/godotenv"
+	"github.com/paulmach/orb"
 )
 
 // Load in environmental variables
@@ -49,31 +50,44 @@ func readAddresses(w http.ResponseWriter, r *http.Request) {
 	json.Unmarshal(bytes, &address_map)
 
 	var yelp_search_query string
+	var do_yelp_search bool = false
 	var addresses []string
 
 	for key, val := range address_map {
 		if key == "yelp_search" {
 			yelp_search_query = val.(string)
-		}
-		// Skip empty addresses
-		if key != "yelp_search" && val != "" {
+		} else if key == "do-yelp-search" {
+			do_yelp_search = true
+		} else if key != "yelp_search" && val != "" {
+			// Skip empty addresses
 			addresses = append(addresses, val.(string))
 		}
 	}
 
-	coords := geocode.Geocode(&addresses)
-	// Using 1 mile radius distance
-	query_points, centroid := tessellation.Tessellation(coords, 1)
-	// fmt.Println(len(query_points))
-	yelp_results := search.YelpSearch(query_points, yelp_search_query, centroid)
-
 	// Set the Content-Type header to application/json
 	w.Header().Set("Content-Type", "application/json")
 
-	// Create a simple JSON response
-	response := map[string]interface{}{"addresses": coords, "query_points": query_points, "results": yelp_results}
-	// response := map[string]interface{}{"addresses": coords, "query_points": query_points}
-	// fmt.Println(response)
+	coords := geocode.Geocode(&addresses)
+
+	var response map[string]interface{}
+
+	if do_yelp_search {
+		// Using 1 mile radius distance
+		query_points, centroid := tessellation.Tessellation(coords, 1)
+		yelp_results := search.YelpSearch(query_points, yelp_search_query, centroid)
+		fmt.Println("Number of queried points: ", len(query_points))
+
+		// Create a simple JSON response
+		response = map[string]interface{}{"addresses": coords, "query_points": query_points, "results": yelp_results}
+	} else {
+		// Create a simple JSON response
+		// If Yelp results aren't requested, just map the centroid
+		centroid := tessellation.FindCentroid(coords)
+		response = map[string]interface{}{"addresses": coords, "query_points": []orb.Point{centroid}}
+
+	}
+
+	fmt.Println(response)
 	fmt.Println("Request completed")
 
 	// Encode the response as JSON and send it

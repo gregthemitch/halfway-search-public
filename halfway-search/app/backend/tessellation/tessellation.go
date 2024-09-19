@@ -228,7 +228,7 @@ func get_hexes(centroid orb.Point, radius float64, num_addresses int, address_po
 }
 
 // Find the average point across a series of points
-func findCentroid(addresses []orb.Point) orb.Point {
+func FindCentroid(addresses []orb.Point) orb.Point {
 
 	n := float64(len(addresses))
 
@@ -265,7 +265,7 @@ func giftWrap(addresses []orb.Point) (orb.Polygon, orb.Point) {
 	})
 
 	starting_point := addresses[0]
-	centroid := findCentroid(addresses)
+	centroid := FindCentroid(addresses)
 
 	left_side := make([]orb.Point, 0, len(addresses))
 	right_side := make([]orb.Point, 0, len(addresses))

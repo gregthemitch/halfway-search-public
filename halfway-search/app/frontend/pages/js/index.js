@@ -88,10 +88,10 @@ function submitAddresses(e) {
         console.log("No table exists")
     }
 
+    // Start waiting animation
     startWaitingAnimation()
 
-
-    let content = document.getElementById("text-content")
+    // let content = document.getElementById("text-content")
     var form = document.getElementById("address-input-form");
     var formData = new FormData(form);
 
@@ -134,7 +134,6 @@ function submitAddresses(e) {
         }
         let addressfeatureGroup = Object.values(addressDict)
         let address_layer = new L.featureGroup(addressfeatureGroup).addTo(map)
-        map.fitBounds(address_layer.getBounds())
 
         // Map query points
         let qpArray = resp["query_points"] 
@@ -148,7 +147,20 @@ function submitAddresses(e) {
 
         // Process search results and put into table
         search_results = resp["results"]
-        constructTable(search_results)
+        // Only if yelp results were requested
+        let map_container = document.getElementById("map-container")
+        if ("results" in resp) {
+            constructTable(search_results)
+            map_container.className = "map-container-split"
+            setTimeout(function(){ map.invalidateSize()}, 400);
+        } else {
+            map_container.className = "map-container-full"
+            setTimeout(function(){ map.invalidateSize()}, 400);
+        }
+        // End waiting animation
+        endWaitingAnimation()
+        scrollTo("map_and results")
+        map.fitBounds(address_layer.getBounds().pad(0.5))
 
     })
     .catch((error) => {
@@ -161,92 +173,107 @@ var addressForm = document.getElementById("address-input-form");
 addressForm.addEventListener("submit", submitAddresses);
 
 function emptyTable() {
-let table = document.getElementById("results")
-let header = document.getElementById("table_header")
-let table_body = document.getElementById("table_body")
+    let table = document.getElementById("results")
+    let header = document.getElementById("table_header")
+    let table_body = document.getElementById("table_body")
 
-table.removeChild(header)
-table.removeChild(table_body)
+    table.removeChild(header)
+    table.removeChild(table_body)
 }
 
 function scrollTo(hash) {
-location.hash = "#" + hash;
+    location.hash = "#" + hash;
 }
 
 // Construct results table
 function constructTable(json_data) {
-let table = document.getElementById("results")
-// Getting the all column names
-let col_names = ["Name", "Address", "Price", "URL", "Distance"];
+    let table = document.getElementById("results")
+    // Getting the all column names
+    let col_names = ["Name", "Address", "Price", "URL"];
 
-// Create table header
-let thead = document.createElement("thead") 
-let thead_tr = document.createElement("tr") 
-thead.setAttribute("id", "table_header")
-thead.appendChild(thead_tr)
+    // Create table header
+    let thead = document.createElement("thead")
+    thead.setAttribute("style", "position: sticky;") 
+    let thead_tr = document.createElement("tr") 
+    thead.setAttribute("id", "table_header")
+    thead.appendChild(thead_tr)
 
-col_names.forEach(function(col) {
-    let th = document.createElement("th")
-    th.setAttribute("scope", "col")
-    th.innerHTML = col 
+    col_names.forEach(function(col) {
+        let th = document.createElement("th")
+        th.setAttribute("scope", "col")
+        th.innerHTML = col 
 
-    thead_tr.appendChild(th)
-})
-
-let tbody = document.createElement("tbody")
-// Traversing the JSON data
-for (let i = 0; i < json_data.length; i++) {
-    let row = document.createElement("tr");
-
-    // On hover of a row, map relevant address and name
-    // Adding event listeners to rows
-    row.id = "result_row_" + i
-    row.addEventListener('mouseover', (obj) => {
-        let position = row.id.slice(-1)
-
-        let relevant_name = search_results[i]["name"]
-        let relevant_coords = search_results[i]["coordinates"]
-
-        selected_marker = L.popup(closeButton=false).setLatLng(relevant_coords)
-            .setContent(relevant_name).openOn(map)
-
-    })
-    row.addEventListener('mouseout', (obj) => {
-        map.removeLayer(selected_marker)
+        thead_tr.appendChild(th)
     })
 
-    // Build table body
-    for (let colIndex = 0; colIndex < col_names.length; colIndex++) {
-        let val = json_data[i][col_names[colIndex].toLowerCase()];
+    let tbody = document.createElement("tbody")
+    // Traversing the JSON data
+    for (let i = 0; i < json_data.length; i++) {
+        let row = document.createElement("tr");
 
-        // If there is no key matching the column name
-        if (val == null) val = "";
+        // On hover of a row, map relevant address and name
+        // Adding event listeners to rows
+        row.id = "result_row_" + i
+        row.addEventListener('mouseover', (obj) => {
+            try {
+                map.removeLayer(selected_marker)
+            } catch {
+                console.log("popup doesn't exist")
+            }
 
-        let td = document.createElement("td")
+            let relevant_name = search_results[i]["name"]
+            let relevant_coords = search_results[i]["coordinates"]
 
-        if (col_names[colIndex] === "URL") {
-            let url_link = document.createElement("a")
-            url_link.setAttribute("target", "_blank")
-            url_link.href = val
-            url_link.innerHTML = "Yelp"
+            selected_marker = L.popup(closeButton=false).setLatLng(relevant_coords)
+                .setContent(relevant_name).openOn(map)
 
-            td.append(url_link)
-        } else {
-            td.innerHTML = val
+        })
+        row.addEventListener('click', (obj) => {
+            try {
+                map.removeLayer(selected_marker)
+            } catch {
+                console.log("popup doesn't exist")
+            }
+
+            let relevant_name = search_results[i]["name"]
+            let relevant_coords = search_results[i]["coordinates"]
+
+            selected_marker = L.popup(closeButton=false).setLatLng(relevant_coords)
+                .setContent(relevant_name).openOn(map)
+
+        })
+        // row.addEventListener('mouseout', (obj) => {
+        //     map.removeLayer(selected_marker)
+        // })
+
+        // Build table body
+        for (let colIndex = 0; colIndex < col_names.length; colIndex++) {
+            let val = json_data[i][col_names[colIndex].toLowerCase()];
+
+            // If there is no key matching the column name
+            if (val == null) val = "";
+
+            let td = document.createElement("td")
+
+            if (col_names[colIndex] === "URL") {
+                let url_link = document.createElement("a")
+                url_link.setAttribute("target", "_blank")
+                url_link.href = val
+                url_link.innerHTML = "Yelp"
+
+                td.append(url_link)
+            } else {
+                td.innerHTML = val
+            }
+            
+            row.append(td);
         }
-        
-        row.append(td);
+
+        // Adding each row to the table
+        tbody.append(row);
     }
+    tbody.setAttribute("id", "table_body")
 
-    // Adding each row to the table
-    tbody.append(row);
-}
-tbody.setAttribute("id", "table_body")
-
-table.appendChild(thead)
-table.appendChild(tbody)
-
-// End waiting animation
-endWaitingAnimation()
-scrollTo("results")
+    table.appendChild(thead)
+    table.appendChild(tbody)
 }
